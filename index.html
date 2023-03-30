@@ -34,18 +34,6 @@
         startAnimation(goal);
       }
 
-      function handleKeyDown(event) {
-        if (event.code === 'Space') {
-          speed = 2;
-        }
-      }
-
-      function handleKeyUp(event) {
-        if (event.code === 'Space') {
-          speed = 1;
-        }
-      }
-
       function startAnimation(goal) {
         cancelAnimationFrame(animationFrameId);
 
@@ -75,6 +63,7 @@
           const y = start.y + (goal.y - start.y) * progress;
           player1.setAttribute('cx', x);
           player1.setAttribute('cy', y);
+          animatePlayer2(x, y);
 
           animationFrameId = requestAnimationFrame(animate);
         }
@@ -82,9 +71,23 @@
         animationFrameId = requestAnimationFrame(animate);
       }
 
+      function animatePlayer2(player1x, player1y) {
+        const start = {
+          x: parseFloat(player2.getAttribute('cx')),
+          y: parseFloat(player2.getAttribute('cy')),
+        };
+        const distance = Math.sqrt(
+          (player1x - start.x) ** 2 + (player1y - start.y) ** 2
+        );
+        const duration = distance / (speed * 0.1);
+        console.log(distance);
+        const x = start.x + ((player1x - start.x) / distance) * speed;
+        const y = start.y + ((player1y - start.y) / distance) * speed;
+        player2.setAttribute('cx', x);
+        player2.setAttribute('cy', y);
+      }
+
       svgField.addEventListener('click', handleClick);
-      window.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('keyup', handleKeyUp);
     </script>
 
     <style>
