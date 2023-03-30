@@ -1,0 +1,53 @@
+<html lang="en">
+  <body>
+    <svg id="field" width="300" height="200" viewBox="0 0 300 200">
+      <rect id="player" x="50" y="50" width="50" height="50" />
+    </svg>
+
+    <script>
+      const svgField = document.getElementById('field');
+      const player = document.getElementById('player');
+      const playerRect = svgField.getBoundingClientRect();
+      const svgRect = svgField.getBoundingClientRect();
+
+      // const playerCenter = {
+      //   y: playerRect.top + playerRect.height/ 2
+      //   x: playerRect.left + playerRect.width/ 2
+      // }
+
+      function handleClick(clickEvent) {
+        const x = clickEvent.clientX - svgRect.left;
+        const y = clickEvent.clientY - svgRect.top;
+        const viewBoxX =
+          (x / svgRect.width) * svgField.viewBox.baseVal.width +
+          svgField.viewBox.baseVal.x;
+        const viewBoxY =
+          (y / svgRect.height) * svgField.viewBox.baseVal.height +
+          svgField.viewBox.baseVal.y;
+        console.log(
+          `Mouse position within viewBox: (${viewBoxX}, ${viewBoxY})`
+        );
+
+        player.setAttribute('x', viewBoxX - 25);
+        player.setAttribute('y', viewBoxY - 25);
+      }
+
+      svgField.addEventListener('click', handleClick);
+
+      player.addEventListener('transitionend', function () {
+        console.log('Animation finished!');
+      });
+    </script>
+
+    <style>
+      #field {
+        background: #80bf70;
+      }
+
+      #player {
+        fill: #cf701e;
+        transition: all 2s;
+      }
+    </style>
+  </body>
+</html>

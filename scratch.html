@@ -1,0 +1,37 @@
+<html lang="en">
+  <body>
+    <svg id="field" width="300" height="200">
+      <rect id="player" x="50" y="50" width="50" height="50" />
+    </svg>
+
+    <script>
+      const svgField = document.getElementById('field');
+      const playerRect = document.getElementById('player');
+
+      function handleClick(clickEvent) {
+        const rect = svgField.getBoundingClientRect();
+        const x = clickEvent.clientX - rect.left;
+        const y = clickEvent.clientY - rect.top;
+
+        playerRect.style.transition = 'transform 2s';
+        playerRect.style.transform = `translate(${x}px, ${y}px)`;
+      }
+
+      svgField.addEventListener('click', handleClick);
+
+      playerRect.addEventListener('transitionend', function () {
+        console.log('Animation finished!');
+      });
+    </script>
+
+    <style>
+      #field {
+        background: #80bf70;
+      }
+
+      #player {
+        fill: #cf701e;
+      }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+#field {
+  background: #80bf70;
+}
+
+#player {
+  fill: #cf701e;
+  transition: transform 2s;
+}
