@@ -1,25 +1,98 @@
 <html lang="en">
   <body>
-    <svg id="field" width="300" height="200">
-      <rect id="player" x="50" y="50" width="50" height="50" />
+    <svg id="field" width="300" height="200" viewBox="0 0 300 200">
+      <!-- <rect class="player" id="player1" x="0" y="0" width="50" height="50" /> -->
+      <circle class="player" id="player1" cx="25" cy="25" r="25" />
+      <circle class="player" id="player2" cx="275" cy="175" r="25" />
     </svg>
 
     <script>
       const svgField = document.getElementById('field');
-      const playerRect = document.getElementById('player');
+      const player1 = document.getElementById('player1');
+      const playerRect = player1.getBoundingClientRect();
+      const svgRect = svgField.getBoundingClientRect();
+
+      function getGoalPosition({ clientX, clientY }) {
+        const x = clientX - svgRect.left;
+        const y = clientY - svgRect.top;
+        const viewBoxX =
+          (x / svgRect.width) * svgField.viewBox.baseVal.width +
+          svgField.viewBox.baseVal.x;
+        const viewBoxY =
+          (y / svgRect.height) * svgField.viewBox.baseVal.height +
+          svgField.viewBox.baseVal.y;
+        console.log(
+          `Mouse position within viewBox: (${viewBoxX}, ${viewBoxY})`
+        );
+
+        return { x: viewBoxX, y: viewBoxY };
+      }
+
+      function getDistance(point1, point2) {
+        const dx = point1.x - point2.x;
+        const dy = point1.y - point2.y;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      function getInterceptionPosition(
+        player1Pos,
+        player2Pos,
+        goalPos,
+        player1Speed,
+        player2Speed
+      ) {
+        const distanceToGoal = getDistance(player1Pos, goalPos);
+        const timeToGoal = distanceToGoal / player1Speed;
+        const interceptionPos = {
+          x:
+            player1Pos.x +
+            ((player1Pos.x - player2Pos.x) * (timeToGoal * player2Speed)) /
+              distanceToGoal,
+          y:
+            player1Pos.y +
+            ((player1Pos.y - player2Pos.y) * (timeToGoal * player2Speed)) /
+              distanceToGoal,
+        };
+        return interceptionPos;
+      }
+
+      function movePlayer2(interceptionPos) {
+        const player2 = document.getElementById('player2');
+        const player2Pos = {
+          x: parseFloat(player2.getAttribute('cx')),
+          y: parseFloat(player2.getAttribute('cy')),
+        };
+        const distanceToInterceptionPos = getDistance(
+          player2Pos,
+          interceptionPos
+        );
+        const timeToInterceptionPos = distanceToInterceptionPos / 100;
+        player2.setAttribute('cx', interceptionPos.x);
+        player2.setAttribute('cy', interceptionPos.y);
+        player2.setAttribute(
+          'style',
+          `transition: all ${timeToInterceptionPos}s`
+        );
+      }
 
       function handleClick(clickEvent) {
-        const rect = svgField.getBoundingClientRect();
-        const x = clickEvent.clientX - rect.left;
-        const y = clickEvent.clientY - rect.top;
+        const goal = getGoalPosition(clickEvent);
+        const player1Pos = {
+          x: parseFloat(player1.getAttribute('cx')),
+          y: parseFloat(player1.getAttribute('cy')),
+        };
+        const player2Pos = {
+          x: parseFloat(player2.getAttribute('cx')),
+          y: parseFloat(player2.getAttribute('cy')),
+        };
 
-        playerRect.style.transition = 'transform 2s';
-        playerRect.style.transform = `translate(${x}px, ${y}px)`;
+        player1.setAttribute('cx', goal.x);
+        player1.setAttribute('cy', goal.y);
       }
 
       svgField.addEventListener('click', handleClick);
 
-      playerRect.addEventListener('transitionend', function () {
+      player.addEventListener('transitionend', function () {
         console.log('Animation finished!');
       });
     </script>
@@ -29,8 +102,16 @@
         background: #80bf70;
       }
 
-      #player {
+      .player {
+        transition: all 2s;
+      }
+
+      #player1 {
         fill: #cf701e;
+      }
+
+      #player2 {
+        fill: teal;
       }
     </style>
   </body>
