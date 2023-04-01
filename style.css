@@ -1,8 +1,43 @@
-#field {
-  background: #80bf70;
+:root {
+  --island-blue: #83b9c9;
+  --sunny-yellow: #f1c40f;
+  --grass-green: #7fb069;
+  --peachy-pink: #f3b0a6;
+  --coconut-brown: #8b5a2b;
+  --shell-white: #f8f5e6;
+  --ocean-blue: #59a5d8;
+  --cherry-red: #e74c3c;
+  --melon-green: #abd98f;
+  --purple-hyacinth: #6a5acd;
+  --orange-citrus: #ffa500;
+  --soft-pink: #f4cccc;
+  --peacock-blue: #33a1c9;
+  --lemon-yellow: #fff44f;
+  --lavender: #b19cd9;
 }
 
-#player {
-  fill: #cf701e;
-  transition: transform 2s;
+body {
+  background: var(--ocean-blue);
+}
+
+#field {
+  background: var(--grass-green);
+}
+
+#player1 {
+  fill: var(--cherry-red);
+}
+
+#player2 {
+  fill: var(--purple-hyacinth);
+}
+
+#ball {
+  fill: var(--coconut-brown);
+}
+
+#play-path {
+  fill: none;
+  stroke: var(--lemon-yellow);
+  stroke-width: 3;
 }
