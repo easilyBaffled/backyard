@@ -1,10 +1,11 @@
 import './style.css';
 
 const template = `
-<svg id="field" width="300" height="200" viewBox="0 0 300 200">
+<svg id="field" viewBox="0 0 300 200">
   <circle class="player" id="player1" cx="25" cy="25" r="25" />
   <circle class="ball" id="ball" cx="25" cy="25" r="10" />
-  <circle class="player" id="player2" cx="25" cy="75" r="25" />
+  <circle class="player" id="player2" cx="250" cy="150" r="25" />
+  <circle class="player" id="player3" cx="25" cy="75" r="25" />
   <path
     id="path"
     d="M 0,0
@@ -18,11 +19,11 @@ const template = `
 
 document.body.innerHTML = template;
 
-const [svgField, player1, player2, path] = `field player1 player2 path`
-  .split(' ')
-  .map((s) => document.getElementById(s));
+const [svgField, player1, player2, player3, path] =
+  `field player1 player2 player3, path`
+    .split(' ')
+    .map((s) => document.getElementById(s));
 
-const playerRect = player1.getBoundingClientRect();
 const svgRect = svgField.getBoundingClientRect();
 let animationFrameId = null;
 let speed = 1;
@@ -41,60 +42,105 @@ function getGoalPosition({ clientX, clientY }) {
   return { x: viewBoxX, y: viewBoxY };
 }
 
-function handleClick(clickEvent) {
-  const goal = getGoalPosition(clickEvent);
-  startAnimation(goal);
-}
-
-function startAnimation(goal) {
-  cancelAnimationFrame(animationFrameId);
-
-  const start = {
-    x: parseFloat(player1.getAttribute('cx')),
-    y: parseFloat(player1.getAttribute('cy')),
-  };
-  const distance = Math.sqrt((goal.x - start.x) ** 2 + (goal.y - start.y) ** 2);
-  const duration = distance / (speed * 0.1);
-  const startTime = performance.now();
-
-  function animate(currentTime) {
+function createFrameFunc({ startTime, duration, onTick, onFinish }) {
+  return (currentTime, id) => {
     const progress = (currentTime - startTime) / duration;
 
-    const elapsedTime = currentTime - startTime;
-    // console.log(elapsedTime, duration, progress);
     if (progress >= 1) {
-      player1.setAttribute('cx', goal.x);
-      player1.setAttribute('cy', goal.y);
-      return;
+      return onFinish?.(() => removeTickFunc(id));
     }
-
-    // const progress = elapsedTime / duration;
-    const x = start.x + (goal.x - start.x) * progress;
-    const y = start.y + (goal.y - start.y) * progress;
-    player1.setAttribute('cx', x);
-    player1.setAttribute('cy', y);
-    animatePlayer2(x, y);
-
-    animationFrameId = requestAnimationFrame(animate);
-  }
-
-  animationFrameId = requestAnimationFrame(animate);
+    return onTick({ progress });
+  };
 }
 
-function animatePlayer2(player1x, player1y) {
-  const start = {
-    x: parseFloat(player2.getAttribute('cx')),
-    y: parseFloat(player2.getAttribute('cy')),
+function getPlayerPosition(player) {
+  return {
+    x: parseFloat(player.getAttribute('cx')),
+    y: parseFloat(player.getAttribute('cy')),
   };
-  const distance = Math.sqrt(
-    (player1x - start.x) ** 2 + (player1y - start.y) ** 2
-  );
-  const duration = distance / (speed * 0.1);
-  console.log(distance);
-  const x = start.x + ((player1x - start.x) / distance) * speed;
-  const y = start.y + ((player1y - start.y) / distance) * speed;
+}
+
+function distance(start, goal) {
+  return Math.sqrt((goal.x - start.x) ** 2 + (goal.y - start.y) ** 2);
+}
+
+const tickFunctions = {};
+const addTickFunc = (fn) => {
+  tickFunctions[Date.now() + Math.round(Math.random() * 1000)] = fn;
+};
+const removeTickFunc = (id) => {
+  delete tickFunctions[id];
+};
+
+function start() {
+  cancelAnimationFrame(animationFrameId);
+  animationFrameId = requestAnimationFrame(tick);
+}
+
+function tick(currentTime) {
+  Object.entries(tickFunctions).forEach(([id, fn]) => fn(currentTime, id));
+
+  animationFrameId = requestAnimationFrame(tick);
+}
+
+const keyDict = {};
+
+document.addEventListener('keydown', ({ code }) => {
+  keyDict[code] = true;
+});
+
+document.addEventListener('keyup', ({ code }) => {
+  delete keyDict[code];
+});
+
+function startPlayer1(clickEvent) {
+  const goal = getGoalPosition(clickEvent);
+  const start = getPlayerPosition(player1);
+  const dist = distance(start, goal);
+  const duration = dist / (speed * 0.1);
+  const startTime = performance.now();
+
+  return createFrameFunc({
+    startTime,
+    duration,
+    onTick: ({ progress }) => {
+      const x = start.x + (goal.x - start.x) * progress;
+      const y = start.y + (goal.y - start.y) * progress;
+      player1.setAttribute('cx', x);
+      player1.setAttribute('cy', y);
+    },
+    onFinish: (removeFunc) => {
+      player1.setAttribute('cx', goal.x);
+      player1.setAttribute('cy', goal.y);
+      removeFunc();
+      return;
+    },
+  });
+}
+
+function tickPlayer2(currentTime, id) {
+  const p1Pos = getPlayerPosition(player1);
+
+  const start = getPlayerPosition(player2);
+  const dist = distance(start, p1Pos);
+
+  if (dist < 50) {
+    removeTickFunc(id);
+  }
+
+  let speed = keyDict.Space ? 4 : 2;
+
+  const x = start.x + ((p1Pos.x - start.x) / dist) * speed;
+  const y = start.y + ((p1Pos.y - start.y) / dist) * speed;
   player2.setAttribute('cx', x);
   player2.setAttribute('cy', y);
 }
 
+function handleClick(clickEvent) {
+  addTickFunc(tickPlayer2);
+  addTickFunc(startPlayer1(clickEvent));
+}
+
 svgField.addEventListener('click', handleClick);
+
+start();

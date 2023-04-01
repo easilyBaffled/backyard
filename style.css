@@ -16,6 +16,10 @@
   --lavender: #b19cd9;
 }
 
+svg {
+  width: 95vw;
+}
+
 body {
   background: var(--ocean-blue);
 }
