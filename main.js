@@ -6,28 +6,26 @@ const template = `
   <circle class="ball" id="ball" cx="25" cy="25" r="10" />
   <circle class="player" id="player2" cx="25" cy="75" r="25" />
   <path
-    id="play-path"
+    id="path"
     d="M 0,0
-        l 100,100
+        l 100,150
         l 0,0
         l 150,0
         l0,0"
   />
 </svg>
-
 `;
 
 document.body.innerHTML = template;
-const svgField = document.getElementById('field');
-const player1 = document.getElementById('player1');
-const player2 = document.getElementById('player2');
-const path = document.getElementById('play-path');
+
+const [svgField, player1, player2, path] = `field player1 player2 path`
+  .split(' ')
+  .map((s) => document.getElementById(s));
+
 const playerRect = player1.getBoundingClientRect();
 const svgRect = svgField.getBoundingClientRect();
 let animationFrameId = null;
 let speed = 1;
-
-function animatePlayer2() {}
 
 function getGoalPosition({ clientX, clientY }) {
   const x = clientX - svgRect.left;
@@ -81,6 +79,22 @@ function startAnimation(goal) {
   }
 
   animationFrameId = requestAnimationFrame(animate);
+}
+
+function animatePlayer2(player1x, player1y) {
+  const start = {
+    x: parseFloat(player2.getAttribute('cx')),
+    y: parseFloat(player2.getAttribute('cy')),
+  };
+  const distance = Math.sqrt(
+    (player1x - start.x) ** 2 + (player1y - start.y) ** 2
+  );
+  const duration = distance / (speed * 0.1);
+  console.log(distance);
+  const x = start.x + ((player1x - start.x) / distance) * speed;
+  const y = start.y + ((player1y - start.y) / distance) * speed;
+  player2.setAttribute('cx', x);
+  player2.setAttribute('cy', y);
 }
 
 svgField.addEventListener('click', handleClick);

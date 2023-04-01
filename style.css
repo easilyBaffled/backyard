@@ -36,7 +36,7 @@ body {
   fill: var(--coconut-brown);
 }
 
-#play-path {
+#path {
   fill: none;
   stroke: var(--lemon-yellow);
   stroke-width: 3;
