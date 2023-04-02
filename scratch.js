@@ -1,7 +1,7 @@
 import './style.css';
 
 const template = `
-<svg id="field" viewBox="0 0 400 300">
+<svg id="field" viewBox="0 0 300 200">
   <circle class="player" id="player1" cx="25" cy="25" r="25" />
   <circle class="ball" id="ball" cx="25" cy="25" r="10" />
   <circle class="player" id="player2" cx="250" cy="150" r="25" />
@@ -20,8 +20,7 @@ const template = `
 document.body.innerHTML = template;
 
 const [svgField, player1, player2, player3, path] =
-  `field player1 player2 player3 path`
-    .replace(/,/g, '')
+  `field player1 player2 player3, path`
     .split(' ')
     .map((s) => document.getElementById(s));
 
@@ -94,10 +93,19 @@ document.addEventListener('keyup', ({ code }) => {
   delete keyDict[code];
 });
 
-function startPlayer1(clickEvent) {
-  const goal = getGoalPosition(clickEvent);
-  const start = getPlayerPosition(player1);
-  const dist = distance(start, goal);
+const testPath = `M 0,0
+l 100,150
+l 0,0
+l 150,0
+l0,0`;
+
+function getPath({ x, y }) {
+  return testPath.replace('M 0,0', `M ${x}, y`);
+}
+
+function startPlayer3() {
+  const start = getPlayerPosition(player3);
+  const dist = path.getTotalLength();
   const duration = dist / (speed * 0.1);
   const startTime = performance.now();
 
@@ -119,72 +127,9 @@ function startPlayer1(clickEvent) {
   });
 }
 
-function tickPlayer2(currentTime, id) {
-  const p1Pos = getPlayerPosition(player1);
-
-  const start = getPlayerPosition(player2);
-  const dist = distance(start, p1Pos);
-
-  if (dist < 50) {
-    removeTickFunc(id);
-  }
-
-  let speed = keyDict.Space ? 4 : 2;
-
-  const x = start.x + ((p1Pos.x - start.x) / dist) * speed;
-  const y = start.y + ((p1Pos.y - start.y) / dist) * speed;
-  player2.setAttribute('cx', x);
-  player2.setAttribute('cy', y);
-}
-
-const testPath = `M 0,0
-l 100,150
-l 0,0
-l 150,0
-l0,0`;
-
-function getPath({ x, y }) {
-  return testPath.replace('M 0,0', `M ${x}, y`);
-}
-
-function newPath({ x, y }, originalPath) {
-  const newPath = originalPath.cloneNode();
-  newPath.setAttribute(
-    'd',
-    newPath.getAttribute('d').replace('M 0,0', `M ${x}, ${y}`)
-  );
-  return newPath;
-}
-
-function startPlayer3() {
-  const start = getPlayerPosition(player3);
-  const route = newPath(start, path);
-  const dist = route.getTotalLength();
-  const goal = route.getPointAtLength(dist);
-  const duration = dist / (speed * 0.1);
-  const startTime = performance.now();
-
-  return createFrameFunc({
-    startTime,
-    duration,
-    onTick: ({ progress }) => {
-      const { x, y } = route.getPointAtLength(progress * dist);
-      player3.setAttribute('cx', x);
-      player3.setAttribute('cy', y);
-    },
-    onFinish: (removeFunc) => {
-      player3.setAttribute('cx', goal.x);
-      player3.setAttribute('cy', goal.y);
-      removeFunc();
-      return;
-    },
-  });
-}
-
 function handleClick(clickEvent) {
-  // addTickFunc(tickPlayer2);
-  // addTickFunc(startPlayer1(clickEvent));
-  addTickFunc(startPlayer3());
+  addTickFunc(tickPlayer2);
+  addTickFunc(startPlayer1(clickEvent));
 }
 
 svgField.addEventListener('click', handleClick);
