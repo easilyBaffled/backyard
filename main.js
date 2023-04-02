@@ -50,11 +50,11 @@ function createFrameFunc({ startTime, duration, onTick, onFinish }) {
     if (progress >= 1) {
       return onFinish?.(() => removeTickFunc(id));
     }
-    return onTick({ progress });
+    return onTick({ progress, id });
   };
 }
 
-function getPlayerPosition(player) {
+function getBodyPosition(player) {
   return {
     x: parseFloat(player.getAttribute('cx')),
     y: parseFloat(player.getAttribute('cy')),
@@ -95,7 +95,7 @@ document.addEventListener('keyup', ({ code }) => {
 });
 
 function moveToPoint(body, goal, moreTick) {
-  const start = getPlayerPosition(body);
+  const start = getBodyPosition(body);
   const dist = distance(start, goal);
   const duration = dist / (speed * 0.1);
   const startTime = performance.now();
@@ -129,16 +129,18 @@ const simpleCurve = (x) => 0.971 + 3.43 * x - 3.43 * x * x;
 function startBall(clickEvent) {
   const goal = getGoalPosition(clickEvent);
   const r = Number(ball.getAttribute('r'));
-  return moveToPoint(ball, goal, ({ progress }) => {
-    console.log(simpleCurve(progress).toFixed(2), progress);
+  return moveToPoint(ball, goal, ({ progress, id }) => {
+    if (distance(player3, ball) < 100) {
+      removeTickFunc(id);
+    }
     ball.setAttribute('r', Number(r) * simpleCurve(progress));
   });
 }
 
 function tickPlayer2(currentTime, id) {
-  const p1Pos = getPlayerPosition(player1);
+  const p1Pos = getBodyPosition(player1);
 
-  const start = getPlayerPosition(player2);
+  const start = getBodyPosition(player2);
   const dist = distance(start, p1Pos);
 
   if (dist < 50) {
@@ -173,20 +175,41 @@ function newPath({ x, y }, originalPath) {
 }
 
 function startPlayer3() {
-  const start = getPlayerPosition(player3);
+  const start = getBodyPosition(player3);
   const route = newPath(start, path);
   const dist = route.getTotalLength();
   const goal = route.getPointAtLength(dist);
   const duration = dist / (speed * 0.1);
   const startTime = performance.now();
 
+  const runToBall = ({ id }) => {
+    const goal = getBodyPosition(ball);
+    const start = getBodyPosition(player3);
+    const dist = distance(start, goal);
+
+    if (dist < 25) {
+      removeTickFunc(id);
+      // move to endzone
+    }
+
+    const x = start.x + ((p1Pos.x - start.x) / dist) * speed;
+    const y = start.y + ((p1Pos.y - start.y) / dist) * speed;
+    player3.setAttribute('cx', x);
+    player3.setAttribute('cy', y);
+  };
+
   return createFrameFunc({
     startTime,
     duration,
-    onTick: ({ progress }) => {
+    onTick: ({ progress, id }) => {
       const { x, y } = route.getPointAtLength(progress * dist);
       player3.setAttribute('cx', x);
       player3.setAttribute('cy', y);
+
+      if (distance(player3, ball) < 100) {
+        removeTickFunc(id);
+        addTickFunc(runToBall);
+      }
     },
     onFinish: (removeFunc) => {
       player3.setAttribute('cx', goal.x);
@@ -198,11 +221,15 @@ function startPlayer3() {
 }
 
 function handleClick(clickEvent) {
-  addTickFunc(tickPlayer2);
-  addTickFunc(startBall(clickEvent));
-  addTickFunc(startPlayer3());
+  if (playRunning) {
+    addTickFunc(tickPlayer2);
+    addTickFunc(startPlayer3());
+  } else {
+    addTickFunc(startBall(clickEvent));
+  }
 }
 
+let playRunning = false;
 svgField.addEventListener('click', handleClick);
 
 start();
