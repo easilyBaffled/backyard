@@ -2,10 +2,10 @@ import './style.css';
 
 const template = `
 <svg id="field" viewBox="0 0 400 300">
-  <circle class="player" id="player1" cx="25" cy="25" r="25" />
-  <circle class="ball" id="ball" cx="25" cy="25" r="10" />
+  <circle class="player" id="player1" cx="25" cy="200" r="25" />
+  <circle class="ball" id="ball" cx="25" cy="200" r="10" />
   <circle class="player" id="player2" cx="250" cy="150" r="25" />
-  <circle class="player" id="player3" cx="25" cy="75" r="25" />
+  <circle class="player" id="player3" cx="25" cy="25" r="25" />
   <path
     id="path"
     d="M 0,0
@@ -44,7 +44,7 @@ function getGoalPosition({ clientX, clientY }) {
 }
 
 function createFrameFunc({ startTime, duration, onTick, onFinish }) {
-  return (currentTime, id) => {
+  return ({ currentTime, id }) => {
     const progress = (currentTime - startTime) / duration;
 
     if (progress >= 1) {
@@ -62,6 +62,8 @@ function getBodyPosition(player) {
 }
 
 function distance(start, goal) {
+  start = start instanceof Element ? getBodyPosition(start) : start;
+  goal = goal instanceof Element ? getBodyPosition(goal) : goal;
   return Math.sqrt((goal.x - start.x) ** 2 + (goal.y - start.y) ** 2);
 }
 
@@ -79,7 +81,7 @@ function start() {
 }
 
 function tick(currentTime) {
-  Object.entries(tickFunctions).forEach(([id, fn]) => fn(currentTime, id));
+  Object.entries(tickFunctions).forEach(([id, fn]) => fn({ currentTime, id }));
 
   animationFrameId = requestAnimationFrame(tick);
 }
@@ -137,7 +139,7 @@ function startBall(clickEvent) {
   });
 }
 
-function tickPlayer2(currentTime, id) {
+function tickPlayer2({ id }) {
   const p1Pos = getBodyPosition(player1);
 
   const start = getBodyPosition(player2);
@@ -188,12 +190,13 @@ function startPlayer3() {
     const dist = distance(start, goal);
 
     if (dist < 25) {
+      console.log(id);
       removeTickFunc(id);
       // move to endzone
     }
 
-    const x = start.x + ((p1Pos.x - start.x) / dist) * speed;
-    const y = start.y + ((p1Pos.y - start.y) / dist) * speed;
+    const x = start.x + ((goal.x - start.x) / dist) * speed;
+    const y = start.y + ((goal.y - start.y) / dist) * speed;
     player3.setAttribute('cx', x);
     player3.setAttribute('cy', y);
   };
@@ -206,6 +209,7 @@ function startPlayer3() {
       player3.setAttribute('cx', x);
       player3.setAttribute('cy', y);
 
+      console.log(distance({ x, y }, ball));
       if (distance(player3, ball) < 100) {
         removeTickFunc(id);
         addTickFunc(runToBall);
@@ -222,10 +226,11 @@ function startPlayer3() {
 
 function handleClick(clickEvent) {
   if (playRunning) {
+    addTickFunc(startBall(clickEvent));
+  } else {
     addTickFunc(tickPlayer2);
     addTickFunc(startPlayer3());
-  } else {
-    addTickFunc(startBall(clickEvent));
+    playRunning = true;
   }
 }
 
