@@ -94,9 +94,8 @@ document.addEventListener('keyup', ({ code }) => {
   delete keyDict[code];
 });
 
-function startPlayer1(clickEvent) {
-  const goal = getGoalPosition(clickEvent);
-  const start = getPlayerPosition(player1);
+function moveToPoint(body, goal, moreTick) {
+  const start = getPlayerPosition(body);
   const dist = distance(start, goal);
   const duration = dist / (speed * 0.1);
   const startTime = performance.now();
@@ -107,15 +106,32 @@ function startPlayer1(clickEvent) {
     onTick: ({ progress }) => {
       const x = start.x + (goal.x - start.x) * progress;
       const y = start.y + (goal.y - start.y) * progress;
-      player1.setAttribute('cx', x);
-      player1.setAttribute('cy', y);
+      body.setAttribute('cx', x);
+      body.setAttribute('cy', y);
+      moreTick?.({ progress });
     },
     onFinish: (removeFunc) => {
-      player1.setAttribute('cx', goal.x);
-      player1.setAttribute('cy', goal.y);
+      body.setAttribute('cx', goal.x);
+      body.setAttribute('cy', goal.y);
       removeFunc();
       return;
     },
+  });
+}
+
+function startPlayer1(clickEvent) {
+  const goal = getGoalPosition(clickEvent);
+  return moveToPoint(player1, goal);
+}
+
+const simpleCurve = (x) => 0.971 + 3.43 * x - 3.43 * x * x;
+
+function startBall(clickEvent) {
+  const goal = getGoalPosition(clickEvent);
+  const r = Number(ball.getAttribute('r'));
+  return moveToPoint(ball, goal, ({ progress }) => {
+    console.log(simpleCurve(progress).toFixed(2), progress);
+    ball.setAttribute('r', Number(r) * simpleCurve(progress));
   });
 }
 
@@ -182,8 +198,8 @@ function startPlayer3() {
 }
 
 function handleClick(clickEvent) {
-  // addTickFunc(tickPlayer2);
-  // addTickFunc(startPlayer1(clickEvent));
+  addTickFunc(tickPlayer2);
+  addTickFunc(startBall(clickEvent));
   addTickFunc(startPlayer3());
 }
 
