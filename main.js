@@ -1,11 +1,30 @@
 import './style.css';
 
+const ballSize = 5;
+const playerMod = 3;
+const playerSize = playerMod * ballSize;
+const worldWidthMod = 80;
+const worldHeightMod = 60;
+
+const players = [
+  { x: 25, y: 200 },
+  { x: 250, y: 150 },
+  { x: 25, y: 25 },
+].map(
+  ({ x, y }, i) =>
+    `<circle class="player" id="player${
+      i + 1
+    }" cx="${x}" cy="${y}" r="${playerSize}" />`
+);
+
 const template = `
-<svg id="field" viewBox="0 0 400 300">
-  <circle class="player" id="player1" cx="25" cy="200" r="25" />
-  <circle class="ball" id="ball" cx="25" cy="200" r="10" />
-  <circle class="player" id="player2" cx="250" cy="150" r="25" />
-  <circle class="player" id="player3" cx="25" cy="25" r="25" />
+<svg id="field" viewBox="0 0 ${worldWidthMod * ballSize} ${
+  worldHeightMod * ballSize
+}">
+  <circle class="player" id="player1" cx="25" cy="200" r="${playerSize}" />
+  <circle class="ball" id="ball" cx="25" cy="200" r="${ballSize}" />
+  <circle class="player" id="player2" cx="250" cy="150" r="${playerSize}" />
+  <circle class="player" id="player3" cx="25" cy="25" r="${playerSize}" />
   <path
     id="path"
     d="M 0,0
@@ -16,6 +35,11 @@ const template = `
   />
 </svg>
 `;
+
+const ballState = {
+  position: { x: 25, y: 200 },
+  heldBy: 0,
+};
 
 document.body.innerHTML = template;
 
@@ -129,6 +153,7 @@ function startPlayer1(clickEvent) {
 const simpleCurve = (x) => 0.971 + 3.43 * x - 3.43 * x * x;
 
 function startBall(clickEvent) {
+  ballState.heldBy = null;
   const goal = getGoalPosition(clickEvent);
   const r = Number(ball.getAttribute('r'));
   return moveToPoint(ball, goal, ({ progress, id }) => {
@@ -184,21 +209,21 @@ function startPlayer3() {
   const duration = dist / (speed * 0.1);
   const startTime = performance.now();
 
-  const runToBall = ({ id }) => {
+  const runToBall = ({ currentTime, id }) => {
     const goal = getBodyPosition(ball);
     const start = getBodyPosition(player3);
     const dist = distance(start, goal);
+    const duration = dist / (speed * 0.1);
+    const progress = (currentTime - performance.now()) / duration;
 
-    if (dist < 25) {
-      console.log(id);
-      removeTickFunc(id);
-      // move to endzone
-    }
-
-    const x = start.x + ((goal.x - start.x) / dist) * speed;
-    const y = start.y + ((goal.y - start.y) / dist) * speed;
+    const x = start.x + (goal.x - start.x) * progress;
+    const y = start.y + (goal.y - start.y) * progress;
     player3.setAttribute('cx', x);
     player3.setAttribute('cy', y);
+
+    if (distance(player3, ball) < ballSize * 3) {
+      ballState.heldBy = 3;
+    }
   };
 
   return createFrameFunc({
@@ -210,7 +235,7 @@ function startPlayer3() {
       player3.setAttribute('cy', y);
 
       console.log(distance({ x, y }, ball));
-      if (distance(player3, ball) < 100) {
+      if (!ballState.heldBy && distance(player3, ball) < ballSize * 10) {
         removeTickFunc(id);
         addTickFunc(runToBall);
       }
@@ -218,7 +243,11 @@ function startPlayer3() {
     onFinish: (removeFunc) => {
       player3.setAttribute('cx', goal.x);
       player3.setAttribute('cy', goal.y);
-      removeFunc();
+      // removeFunc();
+      if (!ballState.heldBy && distance(player3, ball) < ballSize * 10) {
+        removeTickFunc();
+        addTickFunc(runToBall);
+      }
       return;
     },
   });
