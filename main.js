@@ -44,7 +44,7 @@ const ballState = {
 document.body.innerHTML = template;
 
 const [svgField, player1, player2, player3, path] =
-  `field player1 player2 player3 path`
+  `field player1 player2 player3 path ball`
     .replace(/,/g, '')
     .split(' ')
     .map((s) => document.getElementById(s));
@@ -120,10 +120,10 @@ document.addEventListener('keyup', ({ code }) => {
   delete keyDict[code];
 });
 
-function moveToPoint(body, goal, moreTick) {
+function moveToPoint(body, goal, speedMod = 1, moreTick) {
   const start = getBodyPosition(body);
   const dist = distance(start, goal);
-  const duration = dist / (speed * 0.1);
+  const duration = dist / (speed * speedMod * 0.1);
   const startTime = performance.now();
 
   return createFrameFunc({
@@ -156,7 +156,7 @@ function startBall(clickEvent) {
   ballState.heldBy = null;
   const goal = getGoalPosition(clickEvent);
   const r = Number(ball.getAttribute('r'));
-  return moveToPoint(ball, goal, ({ progress, id }) => {
+  return moveToPoint(ball, goal, 2, ({ progress, id }) => {
     if (distance(player3, ball) < 100) {
       removeTickFunc(id);
     }
@@ -214,7 +214,8 @@ function startPlayer3() {
     const start = getBodyPosition(player3);
     const dist = distance(start, goal);
     const duration = dist / (speed * 0.1);
-    const progress = (currentTime - performance.now()) / duration;
+    // console.log(dist / (speed * 0.1));
+    const progress = 1 / 16;
 
     const x = start.x + (goal.x - start.x) * progress;
     const y = start.y + (goal.y - start.y) * progress;
