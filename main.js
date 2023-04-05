@@ -7,24 +7,25 @@ const worldWidthMod = 80;
 const worldHeightMod = 60;
 
 const players = [
-  { x: 25, y: 200 },
-  { x: 250, y: 150 },
-  { x: 25, y: 25 },
-].map(
-  ({ x, y }, i) =>
-    `<circle class="player" id="player${
-      i + 1
-    }" cx="${x}" cy="${y}" r="${playerSize}" />`
-);
+  { x: 25, y: 200, team: 1 },
+  { x: 250, y: 150, team: 2 },
+  { x: 25, y: 25, team: 1 },
+]
+  .map(
+    ({ x, y, team }, i) =>
+      `<circle class="player team-${team}" id="player${
+        i + 1
+      }" cx="${x}" cy="${y}" r="${playerSize}" />`
+  )
+  .join('\n');
 
 const template = `
 <svg id="field" viewBox="0 0 ${worldWidthMod * ballSize} ${
   worldHeightMod * ballSize
 }">
-  <circle class="player" id="player1" cx="25" cy="200" r="${playerSize}" />
+  
+  ${players}
   <circle class="ball" id="ball" cx="25" cy="200" r="${ballSize}" />
-  <circle class="player" id="player2" cx="250" cy="150" r="${playerSize}" />
-  <circle class="player" id="player3" cx="25" cy="25" r="${playerSize}" />
   <path
     id="path"
     d="M 0,0

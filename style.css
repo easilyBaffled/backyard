@@ -28,12 +28,28 @@ body {
   background: var(--grass-green);
 }
 
-#player1 {
+.player {
+  stroke-width: 2;
+}
+
+.team-1 {
   fill: var(--cherry-red);
 }
 
-#player2 {
+.team-2 {
   fill: var(--purple-hyacinth);
+}
+
+#player1 {
+  stroke: var(--shell-white);
+}
+
+#player3 {
+  stroke: var(--lemon-yellow);
+}
+
+#player2 {
+  stroke: black;
 }
 
 #ball {
@@ -42,6 +58,7 @@ body {
 
 #path {
   fill: none;
-  stroke: var(--lemon-yellow);
-  stroke-width: 3;
+  stroke: none;
+  /* stroke: var(--lemon-yellow);
+  stroke-width: 3; */
 }
